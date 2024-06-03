@@ -109,8 +109,8 @@ local function setup()
     end
 
     function M.setup()
-        vim.api.nvim_set_keymap('v', '<leader>gs', ':lua require("git_gud.git_patch").stage_hunk()<CR>', { noremap = true, silent = true })
-        vim.api.nvim_set_keymap('n', '<leader>ga', ':lua require("git_gud.git_patch").git_add_patch()<CR>', { noremap = true, silent = true })
+        vim.api.nvim_set_keymap('v', '<leader>gs', ':lua require("git_patch").stage_hunk()<CR>', { noremap = true, silent = true })
+        vim.api.nvim_set_keymap('n', '<leader>ga', ':lua require("git_patch").git_add_patch()<CR>', { noremap = true, silent = true })
     end
 
     return M
