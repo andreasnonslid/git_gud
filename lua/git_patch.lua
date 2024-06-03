@@ -27,6 +27,52 @@ local function setup()
         vim.cmd('diffthis')
     end
 
+    local function stage_hunk()
+        local bufnr = vim.api.nvim_get_current_buf()
+        vim.cmd('write')
+        local temp_file = vim.fn.tempname()
+        vim.fn.system('git diff > ' .. temp_file)
+        vim.cmd('vsp')
+        local temp_buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_lines(temp_buf, 0, -1, false, vim.fn.readfile(temp_file))
+        vim.api.nvim_set_current_buf(temp_buf)
+        vim.cmd('diffthis')
+    end
+
+    local function git_add_patch()
+        vim.cmd('write')
+        local temp_file = vim.fn.tempname()
+        vim.fn.system('git diff > ' .. temp_file)
+        local lines = vim.fn.readfile(temp_file)
+        local hunks = {}
+        local current_hunk = {}
+
+        for _, line in ipairs(lines) do
+            if line:sub(1, 3) == '@@ ' then
+                if #current_hunk > 0 then
+                    table.insert(hunks, table.concat(current_hunk, '\n'))
+                    current_hunk = {}
+                end
+            end
+            table.insert(current_hunk, line)
+        end
+
+        if #current_hunk > 0 then
+            table.insert(hunks, table.concat(current_hunk, '\n'))
+        end
+
+        for _, hunk in ipairs(hunks) do
+            local choice = vim.fn.input('Stage this hunk? (y/n): ')
+            if choice:lower() == 'y' then
+                local hunk_file = vim.fn.tempname()
+                vim.fn.writefile(vim.split(hunk, '\n'), hunk_file)
+                vim.fn.system('git apply --cached ' .. hunk_file)
+            end
+        end
+
+        vim.cmd('bd')
+    end
+
     function M.stage_and_commit()
         pickers.new({}, {
             prompt_title = 'Git Status',
@@ -56,10 +102,14 @@ local function setup()
             end
         }):find()
     end
-end
 
-function M.setup()
-    setup()
+    function M.setup()
+        vim.api.nvim_set_keymap('v', '<leader>gs', ':lua require("git_gud.git_patch").stage_hunk()<CR>', { noremap = true, silent = true })
+        vim.api.nvim_set_keymap('n', '<leader>ga', ':lua require("git_gud.git_patch").git_add_patch()<CR>', { noremap = true, silent = true })
+        setup()
+    end
+
+    return M
 end
 
 return M
