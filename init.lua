@@ -1,1 +1,1 @@
-return require('git_patch')
+return require('lua.git_patch')
