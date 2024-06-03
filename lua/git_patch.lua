@@ -5,7 +5,6 @@ local function setup()
     local action_state = require('telescope.actions.state')
     local pickers = require('telescope.pickers')
     local finders = require('telescope.finders')
-    local previewers = require('telescope.previewers')
     local conf = require('telescope.config').values
 
     function M.stage_and_commit()
