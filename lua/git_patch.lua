@@ -11,23 +11,28 @@ local function setup()
     function M.stage_and_commit()
         pickers.new({}, {
             prompt_title = 'Git Status',
-            finder = finders.new_oneshot_job({'git', 'status', '--short'}, {}),
-            sorter = conf.generic_sorter({}),
-            previewer = previewers.new_termopen_previewer({
-                get_command = function(entry)
-                    return { 'git', 'diff', entry.value:match("%s*(.-)%s*$") }
+            finder = finders.new_oneshot_job({
+                'git', 'status', '--porcelain'
+            }, {
+                entry_maker = function(entry)
+                    local file = entry:sub(4)
+                    return {
+                        value = file,
+                        display = file,
+                        ordinal = file
+                    }
                 end
             }),
+            sorter = conf.generic_sorter({}),
             attach_mappings = function(prompt_bufnr, map)
-                local function stage_and_commit()
+                local function show_diff()
                     local entry = action_state.get_selected_entry()
-                    local file = entry.value:match("%s*(.-)%s*$")
-                    vim.cmd('silent !git add -p ' .. file)
-                    vim.cmd('silent !git commit -m "Interactive commit for ' .. file .. '"') -- Replace this with a prompt for a commit message
+                    local file = entry.value
                     actions.close(prompt_bufnr)
+                    vim.cmd('Gdiffsplit ' .. file)
                 end
-                map('i', '<CR>', stage_and_commit)
-                map('n', '<CR>', stage_and_commit)
+                map('i', '<CR>', show_diff)
+                map('n', '<CR>', show_diff)
                 return true
             end
         }):find()
