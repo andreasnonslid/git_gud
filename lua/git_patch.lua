@@ -28,15 +28,20 @@ local function setup()
     end
 
     local function stage_hunk()
+        vim.cmd('normal! gv')
         local bufnr = vim.api.nvim_get_current_buf()
+        local line_start = vim.fn.line("v")
+        local line_end = vim.fn.line(".")
         vim.cmd('write')
         local temp_file = vim.fn.tempname()
-        vim.fn.system('git diff > ' .. temp_file)
+        vim.fn.system('git diff -U0 > ' .. temp_file)
         vim.cmd('vsp')
         local temp_buf = vim.api.nvim_create_buf(false, true)
         vim.api.nvim_buf_set_lines(temp_buf, 0, -1, false, vim.fn.readfile(temp_file))
         vim.api.nvim_set_current_buf(temp_buf)
         vim.cmd('diffthis')
+        vim.fn.system('git apply --cached --unidiff-zero --index < ' .. temp_file)
+        vim.cmd('bd')
     end
 
     local function git_add_patch()
@@ -106,10 +111,9 @@ local function setup()
     function M.setup()
         vim.api.nvim_set_keymap('v', '<leader>gs', ':lua require("git_gud.git_patch").stage_hunk()<CR>', { noremap = true, silent = true })
         vim.api.nvim_set_keymap('n', '<leader>ga', ':lua require("git_gud.git_patch").git_add_patch()<CR>', { noremap = true, silent = true })
-        setup()
     end
 
     return M
 end
 
-return M
+return setup()
